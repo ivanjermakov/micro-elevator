@@ -1,7 +1,13 @@
 package com.github.ivanjermakov.microelevator.elevator.service;
 
 import com.github.ivanjermakov.microelevator.core.model.ElevatorState;
+import com.github.ivanjermakov.microelevator.core.service.WebClientService;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.util.List;
@@ -11,6 +17,25 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ElevatorService {
 
 	private final List<FluxSink<ElevatorState>> subscriptions = new CopyOnWriteArrayList<>();
+	private Flux<List<Integer>> routeFlux;
+
+	private final WebClientService webClientService;
+
+	public ElevatorService(WebClientService webClientService) {
+		this.webClientService = webClientService;
+	}
+
+	@EventListener(ApplicationReadyEvent.class)
+	public void subscribe() {
+		routeFlux = webClientService.logicServiceClient()
+				.get()
+				.uri("/subscribe")
+				.retrieve()
+				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<List<Integer>>>() {})
+				.map(ServerSentEvent::data);
+
+		routeFlux.subscribe(this::processRoute);
+	}
 
 	public void newState(ElevatorState state) {
 		subscriptions.forEach(s -> s.next(state));
@@ -18,6 +43,10 @@ public class ElevatorService {
 
 	public void connect(FluxSink<ElevatorState> sink) {
 		subscriptions.add(sink);
+	}
+
+	public void processRoute(List<Integer> integers) {
+
 	}
 
 }

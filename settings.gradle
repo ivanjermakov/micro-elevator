@@ -1,0 +1,6 @@
+rootProject.name = 'micro-elevator'
+
+include 'core'
+include 'logic-service'
+include 'floor-service'
+include 'elevator-service'

@@ -36,7 +36,6 @@ dependencies {
 
     compile "org.jetbrains:annotations:16.0.2"
 
-    compile "org.springframework.boot:spring-boot-starter-web:$springVersion"
     compile "org.springframework.boot:spring-boot-starter-webflux:$springVersion"
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springVersion"

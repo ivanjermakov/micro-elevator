@@ -2,4 +2,3 @@ server:
   port: 8082
   servlet:
     context-path: '/elevator'
-  url: 'http://localhost'

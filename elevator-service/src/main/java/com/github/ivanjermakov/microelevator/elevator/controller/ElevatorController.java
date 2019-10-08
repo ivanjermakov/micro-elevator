@@ -16,7 +16,7 @@ public class ElevatorController {
 		this.elevatorService = elevatorService;
 	}
 
-	@GetMapping(path = "subscribe", consumes = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@GetMapping(path = "subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<ElevatorState> state() {
 		return elevatorService.getElevatorStateProcessor();
 	}

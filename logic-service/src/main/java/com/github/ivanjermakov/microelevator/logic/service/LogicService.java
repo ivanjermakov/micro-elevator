@@ -28,7 +28,7 @@ public class LogicService {
 	public void subscribe() {
 		floorOrderFlux = webClientService.floorServiceClient()
 				.get()
-				.uri("/route")
+				.uri("/subscribe")
 				.retrieve()
 				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {})
 				.map(ServerSentEvent::data);

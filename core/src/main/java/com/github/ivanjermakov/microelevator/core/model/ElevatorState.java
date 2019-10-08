@@ -2,33 +2,25 @@ package com.github.ivanjermakov.microelevator.core.model;
 
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 
-import java.util.List;
-
 public class ElevatorState {
 
 	private Status status;
-	private List<FloorOrder> orders;
-	private List<Integer> route;
+	private Integer currentFloor;
 
 	private ElevatorState() {
 	}
 
-	public ElevatorState(Status status, List<FloorOrder> orders, List<Integer> route) {
+	public ElevatorState(Status status, Integer currentFloor) {
 		this.status = status;
-		this.orders = orders;
-		this.route = route;
+		this.currentFloor = currentFloor;
 	}
 
 	public Status getStatus() {
 		return status;
 	}
 
-	public List<FloorOrder> getOrders() {
-		return orders;
-	}
-
-	public List<Integer> getRoute() {
-		return route;
+	public Integer getCurrentFloor() {
+		return currentFloor;
 	}
 
 }

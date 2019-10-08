@@ -2,22 +2,24 @@ package com.github.ivanjermakov.microelevator.floor.service;
 
 import com.github.ivanjermakov.microelevator.core.model.FloorOrder;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.FluxSink;
-
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import reactor.core.publisher.DirectProcessor;
+import reactor.core.publisher.FluxProcessor;
 
 @Service
 public class FloorService {
 
-	private final List<FluxSink<FloorOrder>> subscriptions = new CopyOnWriteArrayList<>();
+	private FluxProcessor<FloorOrder, FloorOrder> floorOrderProcessor;
 
-	public void newOrder(FloorOrder order) {
-		subscriptions.forEach(s -> s.next(order));
+	public FloorService() {
+		floorOrderProcessor = DirectProcessor.<FloorOrder>create().serialize();
 	}
 
-	public void connect(FluxSink<FloorOrder> sink) {
-		subscriptions.add(sink);
+	public void nextOrder(FloorOrder order) {
+		floorOrderProcessor.sink().next(order);
+	}
+
+	public FluxProcessor<FloorOrder, FloorOrder> getFloorOrderProcessor() {
+		return floorOrderProcessor;
 	}
 
 }

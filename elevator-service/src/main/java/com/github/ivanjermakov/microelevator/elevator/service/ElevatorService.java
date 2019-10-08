@@ -9,12 +9,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.FluxProcessor;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,12 +22,14 @@ public class ElevatorService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElevatorService.class);
 
-	private final List<FluxSink<ElevatorState>> subscriptions = new CopyOnWriteArrayList<>();
+	private FluxProcessor<ElevatorState, ElevatorState> elevatorStateProcessor;
 	private Flux<List<Integer>> routeFlux;
 
 	private final WebClientService webClientService;
 
 	public ElevatorService(WebClientService webClientService) {
+		elevatorStateProcessor = DirectProcessor.<ElevatorState>create().serialize();
+
 		this.webClientService = webClientService;
 	}
 
@@ -43,12 +45,8 @@ public class ElevatorService {
 		routeFlux.subscribe(this::processRoute);
 	}
 
-	public void newState(ElevatorState state) {
-		subscriptions.forEach(s -> s.next(state));
-	}
-
-	public void connect(FluxSink<ElevatorState> sink) {
-		subscriptions.add(sink);
+	public void nextState(ElevatorState state) {
+		elevatorStateProcessor.sink().next(state);
 	}
 
 	public void processRoute(List<Integer> integers) {
@@ -56,6 +54,10 @@ public class ElevatorService {
 				.stream()
 				.map(Objects::toString)
 				.collect(Collectors.joining(", ")));
+	}
+
+	public FluxProcessor<ElevatorState, ElevatorState> getElevatorStateProcessor() {
+		return elevatorStateProcessor;
 	}
 
 }

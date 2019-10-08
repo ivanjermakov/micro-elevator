@@ -3,3 +3,5 @@ server:
   servlet:
     context-path: '/elevator'
   url: 'http://localhost'
+reconnection:
+  timeout: 100

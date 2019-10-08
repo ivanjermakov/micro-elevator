@@ -3,3 +3,5 @@ server:
   servlet:
     context-path: '/floor'
   url: 'http://localhost'
+reconnection:
+  timeout: 100

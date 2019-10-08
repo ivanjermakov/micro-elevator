@@ -4,9 +4,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-//TODO: auto reconnection
 @Service
 public class WebClientService {
+
+	@Value("${reconnection.timeout}")
+	public Integer reconnectionTimeout;
 
 	@Value("${server.url}")
 	private String serverUrl;

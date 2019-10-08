@@ -3,3 +3,5 @@ server:
   servlet:
     context-path: '/logic'
   url: 'http://localhost'
+reconnection:
+  timeout: 1000

@@ -48,8 +48,7 @@ public class ElevatorService {
 		routeFlux = webClientService.build(
 				webClientService.logicServiceClient(),
 				"/route",
-				new ParameterizedTypeReference<ServerSentEvent<Route>>() {},
-				this::subscribe
+				new ParameterizedTypeReference<ServerSentEvent<Route>>() {}
 		);
 
 		routeFlux.subscribe(this::processRoute);

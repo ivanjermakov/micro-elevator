@@ -38,7 +38,7 @@ public class WebClientService {
 				.build();
 	}
 
-	public <T> Flux<T> build(WebClient webClient, String uri, ParameterizedTypeReference<ServerSentEvent<T>> typeReference, Runnable onError) {
+	public <T> Flux<T> build(WebClient webClient, String uri, ParameterizedTypeReference<ServerSentEvent<T>> typeReference) {
 		LOG.info("subscribing to {}", uri);
 		return webClient
 				.get()
@@ -46,14 +46,8 @@ public class WebClientService {
 				.retrieve()
 				.bodyToFlux(typeReference)
 				.map(ServerSentEvent::data)
-				.doOnError(e -> {
-					LOG.error("error subscribing to {}; retrying;", uri, e);
-					try {
-						Thread.sleep(reconnectionTimeout);
-					} catch (InterruptedException ignored) {
-					}
-					onError.run();
-				});
+				.retry()
+				.repeat();
 	}
 
 }

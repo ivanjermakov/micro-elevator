@@ -39,23 +39,25 @@ public class LogicService {
 		this.webClientService = webClientService;
 	}
 
+	public FluxProcessor<Route, Route> getRouteProcessor() {
+		return routeProcessor;
+	}
+
 	@EventListener(ApplicationReadyEvent.class)
 	public void subscribe() {
 		floorOrderFlux = webClientService.build(
 				webClientService.floorServiceClient(),
 				"/subscribe",
-				new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {},
-				this::subscribe
+				new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {}
 		);
+		floorOrderFlux.subscribe(fo -> LOG.debug("received order: {}", fo));
 
 		elevatorStateFlux = webClientService.build(
 				webClientService.elevatorServiceClient(),
 				"/subscribe",
-				new ParameterizedTypeReference<ServerSentEvent<ElevatorState>>() {},
-				this::subscribe
+				new ParameterizedTypeReference<ServerSentEvent<ElevatorState>>() {}
 		);
-
-		floorOrderFlux.subscribe(fo -> LOG.info(fo.toString()));
+		elevatorStateFlux.subscribe(es -> LOG.debug("received state: {}", es));
 
 		Flux
 				.zip(
@@ -70,10 +72,6 @@ public class LogicService {
 		Route nextRoute = router.route(state, order);
 
 		routeSink.next(nextRoute);
-	}
-
-	public FluxProcessor<Route, Route> getRouteProcessor() {
-		return routeProcessor;
 	}
 
 }

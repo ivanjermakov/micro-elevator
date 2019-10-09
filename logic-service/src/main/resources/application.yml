@@ -5,3 +5,7 @@ server:
   url: 'http://localhost'
 reconnection:
   timeout: 1000
+logging:
+  level:
+    ROOT: info
+    com.github.ivanjermakov: debug

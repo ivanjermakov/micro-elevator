@@ -14,53 +14,49 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.FluxSink;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class ElevatorService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElevatorService.class);
 
-	private FluxProcessor<ElevatorState, ElevatorState> elevatorStateProcessor;
 	private Flux<Route> routeFlux;
 	private ElevatorState idleState;
+
+	private final FluxProcessor<ElevatorState, ElevatorState> elevatorStateProcessor;
+	private final FluxSink<ElevatorState> elevatorStateSink;
 
 	private final WebClientService webClientService;
 
 	public ElevatorService(WebClientService webClientService) {
-		elevatorStateProcessor = DirectProcessor.<ElevatorState>create().serialize();
 		idleState = new ElevatorState(
 				Status.IDLE,
 				1
 		);
+
+		elevatorStateProcessor = DirectProcessor.<ElevatorState>create().serialize();
+		elevatorStateSink = elevatorStateProcessor.sink();
+
 		this.webClientService = webClientService;
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void subscribe() {
-		LOG.info("subscribing to logic/route");
-		routeFlux = webClientService.logicServiceClient()
-				.get()
-				.uri("/route")
-				.retrieve()
-				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<Route>>() {})
-				.map(ServerSentEvent::data)
-				.doOnError(e -> {
-					LOG.error("error subscribing to logic/route; retrying", e);
-					try {
-						TimeUnit.MILLISECONDS.sleep(webClientService.reconnectionTimeout);
-					} catch (InterruptedException ignored) {
-					}
-					subscribe();
-				});
+		routeFlux = webClientService.build(
+				webClientService.logicServiceClient(),
+				"/route",
+				new ParameterizedTypeReference<ServerSentEvent<Route>>() {},
+				this::subscribe
+		);
 
 		routeFlux.subscribe(this::processRoute);
 	}
 
 	public void nextState(ElevatorState state) {
-		elevatorStateProcessor.sink().next(state);
+		elevatorStateSink.next(state);
 	}
 
 	public void processRoute(Route route) {
@@ -70,20 +66,20 @@ public class ElevatorService {
 		if (nextFloor.isPresent()) {
 			LOG.info("moving to floor: {}", nextFloor);
 			ElevatorState nextState = new ElevatorState(Status.RUNNING, nextFloor.get());
-			elevatorStateProcessor.sink().next(nextState);
+			elevatorStateSink.next(nextState);
 
 			try {
-				TimeUnit.MILLISECONDS.sleep(500);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 
 			LOG.info("moved to floor: {}", nextFloor);
 			idleState = new ElevatorState(Status.IDLE, nextFloor.get());
-			elevatorStateProcessor.sink().next(idleState);
+			elevatorStateSink.next(idleState);
 		} else {
 			LOG.info("processing route is empty, idling");
-			elevatorStateProcessor.sink().next(idleState);
+			elevatorStateSink.next(idleState);
 		}
 	}
 

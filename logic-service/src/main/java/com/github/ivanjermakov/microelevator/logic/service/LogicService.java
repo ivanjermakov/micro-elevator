@@ -16,8 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
-
-import java.util.concurrent.TimeUnit;
+import reactor.core.publisher.FluxSink;
 
 @Service
 public class LogicService {
@@ -30,47 +29,33 @@ public class LogicService {
 	private final WebClientService webClientService;
 	private final ElevatorRouter router;
 	private final FluxProcessor<Route, Route> routeProcessor;
+	private final FluxSink<Route> routeSink;
 
 	public LogicService(WebClientService webClientService) {
 		this.router = new SimpleElevatorRouter();
 		this.routeProcessor = DirectProcessor.<Route>create().serialize();
+		this.routeSink = routeProcessor.sink();
 
 		this.webClientService = webClientService;
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void subscribe() {
-		LOG.info("subscribing to floor/subscribe");
-		floorOrderFlux = webClientService.floorServiceClient()
-				.get()
-				.uri("/subscribe")
-				.retrieve()
-				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {})
-				.map(ServerSentEvent::data)
-				.doOnError(e -> {
-					LOG.error("error subscribing to floor/subscribe; retrying", e);
-					try {
-						TimeUnit.MILLISECONDS.sleep(webClientService.reconnectionTimeout);
-					} catch (InterruptedException ignored) {
-					}
-					subscribe();
-				});
+		floorOrderFlux = webClientService.build(
+				webClientService.floorServiceClient(),
+				"/subscribe",
+				new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {},
+				this::subscribe
+		);
 
-		LOG.info("subscribing to elevator/subscribe");
-		elevatorStateFlux = webClientService.elevatorServiceClient()
-				.get()
-				.uri("/subscribe")
-				.retrieve()
-				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<ElevatorState>>() {})
-				.map(ServerSentEvent::data)
-				.doOnError(e -> {
-					LOG.error("error subscribing to elevator/subscribe; retrying;", e);
-					try {
-						TimeUnit.MILLISECONDS.sleep(webClientService.reconnectionTimeout);
-					} catch (InterruptedException ignored) {
-					}
-					subscribe();
-				});
+		elevatorStateFlux = webClientService.build(
+				webClientService.elevatorServiceClient(),
+				"/subscribe",
+				new ParameterizedTypeReference<ServerSentEvent<ElevatorState>>() {},
+				this::subscribe
+		);
+
+		floorOrderFlux.subscribe(fo -> LOG.info(fo.toString()));
 
 		Flux
 				.zip(
@@ -84,7 +69,7 @@ public class LogicService {
 		LOG.info("processing new order: {}", order);
 		Route nextRoute = router.route(state, order);
 
-		routeProcessor.sink().next(nextRoute);
+		routeSink.next(nextRoute);
 	}
 
 	public FluxProcessor<Route, Route> getRouteProcessor() {

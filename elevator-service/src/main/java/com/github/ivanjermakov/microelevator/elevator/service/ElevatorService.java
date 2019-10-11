@@ -11,10 +11,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.ReplayProcessor;
 
 import java.util.Optional;
 
@@ -37,8 +37,11 @@ public class ElevatorService {
 				1
 		);
 
-		elevatorStateProcessor = DirectProcessor.<ElevatorState>create().serialize();
+		elevatorStateProcessor = ReplayProcessor.<ElevatorState>create(1).serialize();
 		elevatorStateSink = elevatorStateProcessor.sink();
+
+//		setting initial state
+		nextState(idleState);
 
 		this.webClientService = webClientService;
 	}

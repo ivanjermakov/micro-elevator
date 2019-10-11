@@ -13,10 +13,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.ReplayProcessor;
 
 @Service
 public class LogicService {
@@ -33,7 +33,7 @@ public class LogicService {
 
 	public LogicService(WebClientService webClientService) {
 		this.router = new SimpleElevatorRouter();
-		this.routeProcessor = DirectProcessor.<Route>create().serialize();
+		this.routeProcessor = ReplayProcessor.<Route>create(1).serialize();
 		this.routeSink = routeProcessor.sink();
 
 		this.webClientService = webClientService;

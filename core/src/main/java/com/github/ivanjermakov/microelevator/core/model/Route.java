@@ -24,4 +24,11 @@ public class Route {
 		return floors;
 	}
 
+	@Override
+	public String toString() {
+		return "Route{" +
+				"floors=" + floors +
+				'}';
+	}
+
 }

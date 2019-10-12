@@ -17,6 +17,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.ReplayProcessor;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class ElevatorService {
@@ -25,6 +26,8 @@ public class ElevatorService {
 
 	private Flux<Route> routeFlux;
 	private ElevatorState idleState;
+
+	private AtomicReference<Route> route = new AtomicReference<>(new Route());
 
 	private final FluxProcessor<ElevatorState, ElevatorState> elevatorStateProcessor;
 	private final FluxSink<ElevatorState> elevatorStateSink;
@@ -40,7 +43,7 @@ public class ElevatorService {
 		elevatorStateProcessor = ReplayProcessor.<ElevatorState>create(1).serialize();
 		elevatorStateSink = elevatorStateProcessor.sink();
 
-//		setting initial state
+		LOG.debug("setting initial state: {}", idleState);
 		nextState(idleState);
 
 		this.webClientService = webClientService;
@@ -54,35 +57,39 @@ public class ElevatorService {
 				new ParameterizedTypeReference<ServerSentEvent<Route>>() {}
 		);
 
-		routeFlux.subscribe(this::processRoute);
+		routeFlux.subscribe(r -> {
+			this.route.set(r);
+
+			LOG.info("received route: {}", route);
+
+			Optional<Integer> nextFloor = r.next();
+
+			if (nextFloor.isPresent()) {
+				LOG.info("moving to floor: {}", nextFloor.get());
+				processRoute(nextFloor.get());
+			} else {
+				LOG.info("processing route is empty, idling");
+			}
+		});
 	}
 
 	public void nextState(ElevatorState state) {
 		elevatorStateSink.next(state);
 	}
 
-	public void processRoute(Route route) {
-		LOG.info("processing route: [{}]", route);
+	public void processRoute(Integer toFloor) {
+		ElevatorState nextState = new ElevatorState(Status.RUNNING, toFloor);
+		elevatorStateSink.next(nextState);
 
-		Optional<Integer> nextFloor = route.next();
-		if (nextFloor.isPresent()) {
-			LOG.info("moving to floor: {}", nextFloor);
-			ElevatorState nextState = new ElevatorState(Status.RUNNING, nextFloor.get());
-			elevatorStateSink.next(nextState);
-
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			LOG.info("moved to floor: {}", nextFloor);
-			idleState = new ElevatorState(Status.IDLE, nextFloor.get());
-			elevatorStateSink.next(idleState);
-		} else {
-			LOG.info("processing route is empty, idling");
-			elevatorStateSink.next(idleState);
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
+
+		LOG.info("moved to floor: {}", toFloor);
+		idleState = new ElevatorState(Status.IDLE, toFloor);
+		elevatorStateSink.next(idleState);
 	}
 
 	public FluxProcessor<ElevatorState, ElevatorState> getElevatorStateProcessor() {

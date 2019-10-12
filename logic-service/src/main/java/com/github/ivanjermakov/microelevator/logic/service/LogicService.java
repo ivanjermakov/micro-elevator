@@ -3,6 +3,7 @@ package com.github.ivanjermakov.microelevator.logic.service;
 import com.github.ivanjermakov.microelevator.core.model.ElevatorState;
 import com.github.ivanjermakov.microelevator.core.model.FloorOrder;
 import com.github.ivanjermakov.microelevator.core.model.Route;
+import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 import com.github.ivanjermakov.microelevator.core.service.WebClientService;
 import com.github.ivanjermakov.microelevator.logic.algorithm.ElevatorRouter;
 import com.github.ivanjermakov.microelevator.logic.algorithm.SimpleElevatorRouter;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.ReplayProcessor;
+import reactor.util.function.Tuples;
 
 @Service
 public class LogicService {
@@ -50,26 +52,36 @@ public class LogicService {
 				"/subscribe",
 				new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {}
 		);
-		floorOrderFlux.subscribe(fo -> LOG.debug("received order: {}", fo));
 
 		elevatorStateFlux = webClientService.build(
 				webClientService.elevatorServiceClient(),
 				"/subscribe",
 				new ParameterizedTypeReference<ServerSentEvent<ElevatorState>>() {}
 		);
-		elevatorStateFlux.subscribe(es -> LOG.debug("received state: {}", es));
 
-		Flux
-				.zip(
-						elevatorStateFlux,
-						floorOrderFlux
+		floorOrderFlux
+				.withLatestFrom(
+						elevatorStateFlux
+								.filter(es -> es.getStatus().equals(Status.IDLE)),
+						Tuples::of
 				)
 				.subscribe(tuple -> processOrder(tuple.getT1(), tuple.getT2()));
+
+		elevatorStateFlux
+				.filter(es -> es.getStatus().equals(Status.IDLE))
+				.subscribe(this::processState);
 	}
 
-	private void processOrder(ElevatorState state, FloorOrder order) {
-		LOG.info("processing new order: {}", order);
+	private void processOrder(FloorOrder order, ElevatorState state) {
+		LOG.info("processing new order: {} with state: {}", order, state);
 		Route nextRoute = router.route(state, order);
+
+		routeSink.next(nextRoute);
+	}
+
+	private void processState(ElevatorState state) {
+		LOG.info("processing new state: {}", state);
+		Route nextRoute = router.forState(state);
 
 		routeSink.next(nextRoute);
 	}

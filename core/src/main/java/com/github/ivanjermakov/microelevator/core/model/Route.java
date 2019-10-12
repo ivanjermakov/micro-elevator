@@ -1,13 +1,16 @@
 package com.github.ivanjermakov.microelevator.core.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 public class Route {
 
 	private List<Integer> floors;
 
-	private Route() {
+	public Route() {
+		floors = new ArrayList<>();
 	}
 
 	public Route(List<Integer> floors) {
@@ -26,9 +29,9 @@ public class Route {
 
 	@Override
 	public String toString() {
-		return "Route{" +
-				"floors=" + floors +
-				'}';
+		return new StringJoiner(", ", Route.class.getSimpleName() + "[", "]")
+				.add("floors=" + floors)
+				.toString();
 	}
 
 }

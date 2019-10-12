@@ -8,4 +8,6 @@ public interface ElevatorRouter {
 
 	Route route(ElevatorState state, FloorOrder order);
 
+	Route forState(ElevatorState state);
+
 }

@@ -22,7 +22,6 @@ public class LogicController {
 
 	@GetMapping(path = "route", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<Route> route() {
-		LOG.debug("new subscriber");
 		return logicService.getRouteProcessor();
 	}
 

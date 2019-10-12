@@ -22,7 +22,6 @@ public class ElevatorController {
 
 	@GetMapping(path = "subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<ElevatorState> state() {
-		LOG.debug("new subscriber");
 		return elevatorService.getElevatorStateProcessor();
 	}
 

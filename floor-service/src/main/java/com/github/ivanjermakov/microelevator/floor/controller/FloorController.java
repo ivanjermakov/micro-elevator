@@ -24,13 +24,16 @@ public class FloorController {
 
 	@PostMapping("order")
 	public void order(@RequestBody FloorOrder order) {
+		if (order.getFrom().equals(order.getTo()))
+			throw new IllegalStateException("from and to floors are the same");
+
 		LOG.info("new order: " + order);
+
 		floorService.nextOrder(order);
 	}
 
 	@GetMapping(path = "subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<FloorOrder> subscribe() {
-		LOG.debug("new subscriber");
 		return floorService.getFloorOrderProcessor();
 	}
 

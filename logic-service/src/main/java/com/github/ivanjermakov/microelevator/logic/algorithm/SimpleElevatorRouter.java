@@ -6,12 +6,14 @@ import com.github.ivanjermakov.microelevator.core.model.Route;
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Service
 public class SimpleElevatorRouter implements ElevatorRouter {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleElevatorRouter.class);
@@ -52,9 +54,13 @@ public class SimpleElevatorRouter implements ElevatorRouter {
 				orders
 						.stream()
 						.flatMap(o -> Stream.of(o.getFrom(), o.getTo()))
-						.filter(o -> !o.equals(state.getFloor()))
 						.collect(Collectors.toList())
 		);
+
+//		remove first if it is the same as current floor
+		if (completeRoute.next().isPresent() && completeRoute.next().get().equals(state.getFloor())) {
+			completeRoute.getFloors().remove(0);
+		}
 
 		LOG.info("complete route: {}", completeRoute);
 

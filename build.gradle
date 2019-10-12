@@ -10,6 +10,9 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'jacoco'
 
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
     repositories {
         mavenCentral()
         maven { url "https://jitpack.io" }
@@ -35,5 +38,6 @@ task jacocoRootReport(type: JacocoReport) {
 }
 
 coveralls {
-    jacocoReportPath 'build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml'
+    sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
+    jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
 }

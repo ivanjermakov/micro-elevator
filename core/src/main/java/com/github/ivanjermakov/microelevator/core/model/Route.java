@@ -2,6 +2,7 @@ package com.github.ivanjermakov.microelevator.core.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -25,6 +26,19 @@ public class Route {
 
 	public List<Integer> getFloors() {
 		return floors;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Route)) return false;
+		Route route = (Route) o;
+		return Objects.equals(floors, route.floors);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(floors);
 	}
 
 	@Override

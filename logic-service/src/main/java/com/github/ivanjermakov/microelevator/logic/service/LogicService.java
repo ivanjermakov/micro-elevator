@@ -6,7 +6,6 @@ import com.github.ivanjermakov.microelevator.core.model.Route;
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 import com.github.ivanjermakov.microelevator.core.service.WebClientService;
 import com.github.ivanjermakov.microelevator.logic.algorithm.ElevatorRouter;
-import com.github.ivanjermakov.microelevator.logic.algorithm.SimpleElevatorRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -28,17 +27,18 @@ public class LogicService {
 	private Flux<FloorOrder> floorOrderFlux;
 	private Flux<ElevatorState> elevatorStateFlux;
 
-	private final WebClientService webClientService;
-	private final ElevatorRouter router;
 	private final FluxProcessor<Route, Route> routeProcessor;
 	private final FluxSink<Route> routeSink;
 
-	public LogicService(WebClientService webClientService) {
-		this.router = new SimpleElevatorRouter();
+	private final WebClientService webClientService;
+	private final ElevatorRouter router;
+
+	public LogicService(WebClientService webClientService, ElevatorRouter router) {
 		this.routeProcessor = ReplayProcessor.<Route>create(1).serialize();
 		this.routeSink = routeProcessor.sink();
 
 		this.webClientService = webClientService;
+		this.router = router;
 	}
 
 	public FluxProcessor<Route, Route> getRouteProcessor() {

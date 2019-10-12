@@ -1,9 +1,39 @@
+plugins {
+    id 'com.github.kt3k.coveralls' version '2.8.4'
+    id 'jacoco'
+}
+
 group 'com.github.ivanjermakov'
 version '0.1'
 
 allprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+
     repositories {
         mavenCentral()
         maven { url "https://jitpack.io" }
     }
+}
+
+subprojects {
+    jacocoTestReport {
+        executionData.from = fileTree(buildDir).include("/jacoco/*.exec")
+    }
+}
+
+task jacocoRootReport(type: JacocoReport) {
+    additionalSourceDirs.from = subprojects.sourceSets.main.allSource.srcDirs
+    sourceDirectories.from = subprojects.sourceSets.main.allSource.srcDirs
+    classDirectories.from = subprojects.sourceSets.main.output
+    executionData.from = subprojects.jacocoTestReport.executionData
+
+    reports {
+        html.enabled = true
+        xml.enabled = true
+    }
+}
+
+coveralls {
+    jacocoReportPath 'build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml'
 }

@@ -1,15 +1,6 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '2.1.8.RELEASE'
-
-//    code coverage
-    id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.8.4'
-}
-
-test {
-    systemProperties System.properties
-    systemProperties['user.dir'] = workingDir
 }
 
 bootRun {
@@ -18,17 +9,6 @@ bootRun {
 
 ext {
     springVersion = '2.1.8.RELEASE'
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-}
-
-coveralls {
-    jacocoReportPath 'build/reports/jacoco/test/jacocoTestReport.xml'
 }
 
 dependencies {
@@ -41,5 +21,4 @@ dependencies {
 
     testCompile "org.springframework.boot:spring-boot-starter-test:$springVersion"
     testCompile "io.projectreactor:reactor-test:3.1.0.RELEASE"
-    testCompile "org.jacoco:org.jacoco.agent:0.8.4"
 }

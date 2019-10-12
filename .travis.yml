@@ -2,9 +2,9 @@ language: java
 sudo: false
 jdk:
   - openjdk8
-#env:
-#  - COVERALLS_REPO_TOKEN=
+env:
+  - COVERALLS_REPO_TOKEN=YkHW3dGcbh0rAJPvbtlIFdLk5rZtrvS1g
 script:
   - gradle test
-#after_success:
-#  - gradle jacocoTestReport coveralls
+after_success:
+  - gradle jacocoRootReport coveralls

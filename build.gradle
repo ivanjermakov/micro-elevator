@@ -17,6 +17,10 @@ allprojects {
         mavenCentral()
         maven { url "https://jitpack.io" }
     }
+
+    dependencies {
+        implementation 'com.github.ivanjermakov:micro-subscriber:master-SNAPSHOT'
+    }
 }
 
 subprojects {

@@ -1,11 +1,11 @@
 package com.github.ivanjermakov.microelevator.logic.service;
 
-import com.github.ivanjermakov.microelevator.core.annotation.annotation.Subscribe;
 import com.github.ivanjermakov.microelevator.core.model.ElevatorState;
 import com.github.ivanjermakov.microelevator.core.model.FloorOrder;
 import com.github.ivanjermakov.microelevator.core.model.Route;
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 import com.github.ivanjermakov.microelevator.logic.algorithm.ElevatorRouter;
+import com.github.ivanjermakov.microsubscriber.annotation.Subscribe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,17 +1,16 @@
 package com.github.ivanjermakov.microelevator.logic.service;
 
+import com.github.ivanjermakov.microelevator.core.annotation.annotation.Subscribe;
 import com.github.ivanjermakov.microelevator.core.model.ElevatorState;
 import com.github.ivanjermakov.microelevator.core.model.FloorOrder;
 import com.github.ivanjermakov.microelevator.core.model.Route;
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
-import com.github.ivanjermakov.microelevator.core.service.WebClientService;
 import com.github.ivanjermakov.microelevator.logic.algorithm.ElevatorRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
@@ -24,20 +23,30 @@ public class LogicService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LogicService.class);
 
+	@Subscribe(
+			baseUrl = "http://localhost:8083/floor",
+			uri = "/subscribe",
+			responseType = FloorOrder.class
+	)
 	private Flux<FloorOrder> floorOrderFlux;
+
+	@Subscribe(
+			baseUrl = "http://localhost:8082/elevator",
+			uri = "/subscribe",
+			responseType = ElevatorState.class
+	)
 	private Flux<ElevatorState> elevatorStateFlux;
 
 	private final FluxProcessor<Route, Route> routeProcessor;
 	private final FluxSink<Route> routeSink;
 
-	private final WebClientService webClientService;
 	private final ElevatorRouter router;
 
-	public LogicService(WebClientService webClientService, ElevatorRouter router) {
+	@Autowired
+	public LogicService(ElevatorRouter router) {
 		this.routeProcessor = ReplayProcessor.<Route>create(1).serialize();
 		this.routeSink = routeProcessor.sink();
 
-		this.webClientService = webClientService;
 		this.router = router;
 	}
 
@@ -47,18 +56,6 @@ public class LogicService {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void subscribe() {
-		floorOrderFlux = webClientService.build(
-				webClientService.floorServiceClient(),
-				"/subscribe",
-				new ParameterizedTypeReference<ServerSentEvent<FloorOrder>>() {}
-		);
-
-		elevatorStateFlux = webClientService.build(
-				webClientService.elevatorServiceClient(),
-				"/subscribe",
-				new ParameterizedTypeReference<ServerSentEvent<ElevatorState>>() {}
-		);
-
 		floorOrderFlux
 				.withLatestFrom(
 						elevatorStateFlux

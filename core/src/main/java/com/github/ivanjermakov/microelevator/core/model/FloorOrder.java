@@ -6,20 +6,20 @@ public class FloorOrder {
 
 	private Integer from;
 	private Integer to;
-	private Boolean isAccepted;
+	private Boolean accepted;
 
 	public FloorOrder(Integer from, Integer to) {
 		this(from, to, false);
 	}
 
 	private FloorOrder() {
-		isAccepted = false;
+		accepted = false;
 	}
 
-	private FloorOrder(Integer from, Integer to, Boolean isAccepted) {
+	private FloorOrder(Integer from, Integer to, Boolean accepted) {
 		this.from = from;
 		this.to = to;
-		this.isAccepted = isAccepted;
+		this.accepted = accepted;
 	}
 
 	public Integer getFrom() {
@@ -31,11 +31,11 @@ public class FloorOrder {
 	}
 
 	public Boolean getAccepted() {
-		return isAccepted;
+		return accepted;
 	}
 
 	public void accept() {
-		isAccepted = true;
+		accepted = true;
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public class FloorOrder {
 		return new StringJoiner(", ", FloorOrder.class.getSimpleName() + "[", "]")
 				.add("from=" + from)
 				.add("to=" + to)
-				.add("isAccepted=" + isAccepted)
+				.add("isAccepted=" + accepted)
 				.toString();
 	}
 

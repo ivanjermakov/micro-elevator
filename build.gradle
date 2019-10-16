@@ -19,7 +19,7 @@ allprojects {
     }
 
     dependencies {
-        implementation 'com.github.ivanjermakov:micro-subscriber:master-SNAPSHOT'
+        implementation 'com.github.ivanjermakov:micro-subscriber:v0.1'
     }
 }
 

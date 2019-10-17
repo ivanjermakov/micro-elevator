@@ -34,7 +34,7 @@ public class FloorController {
 
 	@GetMapping(path = "subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<FloorOrder> subscribe() {
-		return floorService.getFloorOrderProcessor();
+		return floorService.getFloorOrderSubject().flux();
 	}
 
 }

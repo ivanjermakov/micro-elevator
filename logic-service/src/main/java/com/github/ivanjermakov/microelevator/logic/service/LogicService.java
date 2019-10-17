@@ -3,6 +3,7 @@ package com.github.ivanjermakov.microelevator.logic.service;
 import com.github.ivanjermakov.microelevator.core.model.ElevatorState;
 import com.github.ivanjermakov.microelevator.core.model.FloorOrder;
 import com.github.ivanjermakov.microelevator.core.model.Route;
+import com.github.ivanjermakov.microelevator.core.model.Subject;
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 import com.github.ivanjermakov.microelevator.logic.algorithm.ElevatorRouter;
 import com.github.ivanjermakov.microsubscriber.annotation.Subscribe;
@@ -13,8 +14,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.ReplayProcessor;
 import reactor.util.function.Tuples;
 
@@ -37,21 +36,19 @@ public class LogicService {
 	)
 	private Flux<ElevatorState> elevatorStateFlux;
 
-	private final FluxProcessor<Route, Route> routeProcessor;
-	private final FluxSink<Route> routeSink;
+	private final Subject<Route> routeSubject;
 
 	private final ElevatorRouter router;
 
 	@Autowired
 	public LogicService(ElevatorRouter router) {
-		this.routeProcessor = ReplayProcessor.<Route>create(1).serialize();
-		this.routeSink = routeProcessor.sink();
+		routeSubject = new Subject<>(ReplayProcessor.<Route>create(1).serialize());
 
 		this.router = router;
 	}
 
-	public FluxProcessor<Route, Route> getRouteProcessor() {
-		return routeProcessor;
+	public Subject<Route> getRouteSubject() {
+		return routeSubject;
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
@@ -73,14 +70,14 @@ public class LogicService {
 		LOG.info("processing new order: {} with state: {}", order, state);
 		Route nextRoute = router.route(state, order);
 
-		routeSink.next(nextRoute);
+		routeSubject.sink().next(nextRoute);
 	}
 
 	private void processState(ElevatorState state) {
 		LOG.info("processing new state: {}", state);
 		Route nextRoute = router.forState(state);
 
-		routeSink.next(nextRoute);
+		routeSubject.sink().next(nextRoute);
 	}
 
 }

@@ -22,7 +22,7 @@ public class LogicController {
 
 	@GetMapping(path = "route", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<Route> route() {
-		return logicService.getRouteProcessor();
+		return logicService.getRouteSubject().flux();
 	}
 
 }

@@ -2,6 +2,7 @@ package com.github.ivanjermakov.microelevator.elevator.service;
 
 import com.github.ivanjermakov.microelevator.core.model.ElevatorState;
 import com.github.ivanjermakov.microelevator.core.model.Route;
+import com.github.ivanjermakov.microelevator.core.model.Subject;
 import com.github.ivanjermakov.microelevator.core.model.enums.Status;
 import com.github.ivanjermakov.microsubscriber.annotation.Subscribe;
 import org.slf4j.Logger;
@@ -11,8 +12,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.ReplayProcessor;
 
 import java.util.Optional;
@@ -34,8 +33,7 @@ public class ElevatorService {
 
 	private AtomicReference<Route> route = new AtomicReference<>(new Route());
 
-	private final FluxProcessor<ElevatorState, ElevatorState> elevatorStateProcessor;
-	private final FluxSink<ElevatorState> elevatorStateSink;
+	private final Subject<ElevatorState> elevatorStateSubject;
 
 	@Autowired
 	public ElevatorService() {
@@ -44,8 +42,7 @@ public class ElevatorService {
 				1
 		);
 
-		elevatorStateProcessor = ReplayProcessor.<ElevatorState>create(1).serialize();
-		elevatorStateSink = elevatorStateProcessor.sink();
+		elevatorStateSubject = new Subject<>(ReplayProcessor.<ElevatorState>create(1).serialize());
 
 		LOG.debug("setting initial state: {}", idleState);
 		nextState(idleState);
@@ -71,12 +68,12 @@ public class ElevatorService {
 	}
 
 	public void nextState(ElevatorState state) {
-		elevatorStateSink.next(state);
+		elevatorStateSubject.sink().next(state);
 	}
 
 	public void processRoute(Integer toFloor) {
 		ElevatorState nextState = new ElevatorState(Status.RUNNING, toFloor);
-		elevatorStateSink.next(nextState);
+		elevatorStateSubject.sink().next(nextState);
 
 		try {
 			Thread.sleep(500);
@@ -86,11 +83,11 @@ public class ElevatorService {
 
 		LOG.info("moved to floor: {}", toFloor);
 		idleState = new ElevatorState(Status.IDLE, toFloor);
-		elevatorStateSink.next(idleState);
+		elevatorStateSubject.sink().next(idleState);
 	}
 
-	public FluxProcessor<ElevatorState, ElevatorState> getElevatorStateProcessor() {
-		return elevatorStateProcessor;
+	public Subject<ElevatorState> getElevatorStateSubject() {
+		return elevatorStateSubject;
 	}
 
 }
